@@ -1,0 +1,217 @@
+make run-safe
+docker-compose -f /Users/jinli/Desktop/x_ray_sdk_reprod/safe/docker-compose.yml up --build --force-recreate
+Building app
+Step 1/10 : FROM golang:1.11 AS builder
+ ---> 69a024a6ecf5
+Step 2/10 : ENV GO111MODULE=on
+ ---> Using cache
+ ---> 6f8fc303d419
+Step 3/10 : WORKDIR /opt
+ ---> Using cache
+ ---> 8cf5c8c30d11
+Step 4/10 : COPY go.mod go.sum ./
+ ---> Using cache
+ ---> 48f34e745bbb
+Step 5/10 : RUN go mod download
+ ---> Using cache
+ ---> 0dad12b25c20
+Step 6/10 : COPY . ./
+ ---> Using cache
+ ---> 8d7b3f8147ab
+Step 7/10 : RUN CGO_ENABLED=1 GOOS=linux go build -race -a -installsuffix nocgo -o /opt/test ./main.go &&    chmod +x /opt/test
+ ---> Using cache
+ ---> 977b575277d1
+
+Step 8/10 : FROM debian:stretch
+ ---> 5a6d49d5e833
+Step 9/10 : COPY --from=builder /opt/test /opt/test
+ ---> Using cache
+ ---> bfa19bcbf00c
+Step 10/10 : ENTRYPOINT ["/opt/test"]
+ ---> Using cache
+ ---> 488ea74323bc
+
+Successfully built 488ea74323bc
+Successfully tagged safe_app:latest
+Recreating safe_dynamodb-local_1 ... done
+Recreating safe_app_1            ... done
+Recreating safe_test_1           ... done
+Attaching to safe_dynamodb-local_1, safe_app_1, safe_test_1
+dynamodb-local_1  | WARNING: no logs are available with the 'none' log driver
+app_1             | time="2019-07-24T13:44:27Z" level=info msg="ddb table [84a26d35-42c5-46a8-ae1a-9c4c55395282] created"
+app_1             | time="2019-07-24T13:44:27Z" level=info msg="item [2] written"
+test_1            | fetch http://dl-cdn.alpinelinux.org/alpine/v3.9/main/x86_64/APKINDEX.tar.gz
+app_1             | time="2019-07-24T13:44:27Z" level=info msg="item [0] written"
+app_1             | time="2019-07-24T13:44:27Z" level=info msg="item [3] written"
+app_1             | time="2019-07-24T13:44:27Z" level=info msg="item [8] written"
+app_1             | time="2019-07-24T13:44:27Z" level=info msg="item [9] written"
+app_1             | time="2019-07-24T13:44:27Z" level=info msg="item [4] written"
+app_1             | time="2019-07-24T13:44:27Z" level=info msg="item [6] written"
+app_1             | time="2019-07-24T13:44:27Z" level=info msg="item [1] written"
+app_1             | time="2019-07-24T13:44:27Z" level=info msg="item [7] written"
+app_1             | time="2019-07-24T13:44:27Z" level=info msg="item [5] written"
+app_1             | time="2019-07-24T13:44:27Z" level=info msg="ddb table [84a26d35-42c5-46a8-ae1a-9c4c55395282] deleted"
+app_1             | time="2019-07-24T13:44:28Z" level=info msg="ddb table [bf228348-f95e-4216-b2f0-fcb8ea6a5fd8] created"
+app_1             | time="2019-07-24T13:44:29Z" level=info msg="item [0] written"
+app_1             | time="2019-07-24T13:44:29Z" level=info msg="item [4] written"
+app_1             | time="2019-07-24T13:44:29Z" level=info msg="item [9] written"
+app_1             | time="2019-07-24T13:44:29Z" level=info msg="item [3] written"
+app_1             | time="2019-07-24T13:44:29Z" level=info msg="item [5] written"
+app_1             | time="2019-07-24T13:44:29Z" level=info msg="item [1] written"
+app_1             | time="2019-07-24T13:44:29Z" level=info msg="item [2] written"
+app_1             | time="2019-07-24T13:44:29Z" level=info msg="item [7] written"
+app_1             | time="2019-07-24T13:44:29Z" level=info msg="item [6] written"
+app_1             | time="2019-07-24T13:44:29Z" level=info msg="item [8] written"
+app_1             | time="2019-07-24T13:44:29Z" level=info msg="ddb table [bf228348-f95e-4216-b2f0-fcb8ea6a5fd8] deleted"
+app_1             | time="2019-07-24T13:44:30Z" level=info msg="ddb table [60dab4de-aedb-47cb-9de9-8912785e2e97] created"
+app_1             | time="2019-07-24T13:44:30Z" level=info msg="item [4] written"
+app_1             | time="2019-07-24T13:44:30Z" level=info msg="item [5] written"
+app_1             | time="2019-07-24T13:44:30Z" level=info msg="item [6] written"
+app_1             | time="2019-07-24T13:44:30Z" level=info msg="item [9] written"
+app_1             | time="2019-07-24T13:44:30Z" level=info msg="item [7] written"
+app_1             | time="2019-07-24T13:44:30Z" level=info msg="item [2] written"
+app_1             | time="2019-07-24T13:44:30Z" level=info msg="item [0] written"
+app_1             | time="2019-07-24T13:44:30Z" level=info msg="item [8] written"
+app_1             | time="2019-07-24T13:44:30Z" level=info msg="item [3] written"
+app_1             | time="2019-07-24T13:44:30Z" level=info msg="item [1] written"
+app_1             | time="2019-07-24T13:44:30Z" level=info msg="ddb table [60dab4de-aedb-47cb-9de9-8912785e2e97] deleted"
+app_1             | time="2019-07-24T13:44:31Z" level=info msg="ddb table [238b167c-0a64-42e9-b5ea-18bc9321397f] created"
+app_1             | time="2019-07-24T13:44:31Z" level=info msg="item [2] written"
+app_1             | time="2019-07-24T13:44:31Z" level=info msg="item [1] written"
+app_1             | time="2019-07-24T13:44:31Z" level=info msg="item [5] written"
+app_1             | time="2019-07-24T13:44:31Z" level=info msg="item [3] written"
+app_1             | time="2019-07-24T13:44:31Z" level=info msg="item [8] written"
+app_1             | time="2019-07-24T13:44:31Z" level=info msg="item [0] written"
+app_1             | time="2019-07-24T13:44:31Z" level=info msg="item [4] written"
+app_1             | time="2019-07-24T13:44:31Z" level=info msg="item [7] written"
+app_1             | time="2019-07-24T13:44:31Z" level=info msg="item [6] written"
+app_1             | time="2019-07-24T13:44:31Z" level=info msg="item [9] written"
+app_1             | time="2019-07-24T13:44:31Z" level=info msg="ddb table [238b167c-0a64-42e9-b5ea-18bc9321397f] deleted"
+app_1             | time="2019-07-24T13:44:32Z" level=info msg="ddb table [99f00d96-b982-47d5-a18d-8c00173f3ed3] created"
+app_1             | time="2019-07-24T13:44:32Z" level=info msg="item [4] written"
+app_1             | time="2019-07-24T13:44:32Z" level=info msg="item [0] written"
+app_1             | time="2019-07-24T13:44:32Z" level=info msg="item [6] written"
+app_1             | time="2019-07-24T13:44:32Z" level=info msg="item [1] written"
+app_1             | time="2019-07-24T13:44:32Z" level=info msg="item [3] written"
+app_1             | time="2019-07-24T13:44:32Z" level=info msg="item [2] written"
+app_1             | time="2019-07-24T13:44:32Z" level=info msg="item [5] written"
+app_1             | time="2019-07-24T13:44:32Z" level=info msg="item [7] written"
+app_1             | time="2019-07-24T13:44:32Z" level=info msg="item [9] written"
+app_1             | time="2019-07-24T13:44:32Z" level=info msg="item [8] written"
+app_1             | time="2019-07-24T13:44:32Z" level=info msg="ddb table [99f00d96-b982-47d5-a18d-8c00173f3ed3] deleted"
+app_1             | time="2019-07-24T13:44:33Z" level=info msg="ddb table [571d31cf-053e-4cbf-9024-a840962c4914] created"
+app_1             | time="2019-07-24T13:44:33Z" level=info msg="item [0] written"
+app_1             | time="2019-07-24T13:44:33Z" level=info msg="item [5] written"
+app_1             | time="2019-07-24T13:44:33Z" level=info msg="item [4] written"
+app_1             | time="2019-07-24T13:44:33Z" level=info msg="item [8] written"
+app_1             | time="2019-07-24T13:44:33Z" level=info msg="item [9] written"
+app_1             | time="2019-07-24T13:44:33Z" level=info msg="item [7] written"
+app_1             | time="2019-07-24T13:44:33Z" level=info msg="item [3] written"
+app_1             | time="2019-07-24T13:44:33Z" level=info msg="item [6] written"
+app_1             | time="2019-07-24T13:44:33Z" level=info msg="item [1] written"
+app_1             | time="2019-07-24T13:44:33Z" level=info msg="item [2] written"
+app_1             | time="2019-07-24T13:44:33Z" level=info msg="ddb table [571d31cf-053e-4cbf-9024-a840962c4914] deleted"
+app_1             | time="2019-07-24T13:44:34Z" level=info msg="ddb table [37cc453c-f264-4ff1-bdf3-2b782da34de7] created"
+app_1             | time="2019-07-24T13:44:34Z" level=info msg="item [2] written"
+app_1             | time="2019-07-24T13:44:34Z" level=info msg="item [1] written"
+app_1             | time="2019-07-24T13:44:34Z" level=info msg="item [3] written"
+app_1             | time="2019-07-24T13:44:34Z" level=info msg="item [6] written"
+app_1             | time="2019-07-24T13:44:34Z" level=info msg="item [9] written"
+app_1             | time="2019-07-24T13:44:34Z" level=info msg="item [5] written"
+app_1             | time="2019-07-24T13:44:34Z" level=info msg="item [8] written"
+app_1             | time="2019-07-24T13:44:34Z" level=info msg="item [7] written"
+app_1             | time="2019-07-24T13:44:34Z" level=info msg="item [4] written"
+app_1             | time="2019-07-24T13:44:34Z" level=info msg="item [0] written"
+app_1             | time="2019-07-24T13:44:34Z" level=info msg="ddb table [37cc453c-f264-4ff1-bdf3-2b782da34de7] deleted"
+app_1             | time="2019-07-24T13:44:35Z" level=info msg="ddb table [ab728d9b-18bf-4bde-9709-20ff11353bb4] created"
+app_1             | time="2019-07-24T13:44:35Z" level=info msg="item [1] written"
+app_1             | time="2019-07-24T13:44:35Z" level=info msg="item [7] written"
+app_1             | time="2019-07-24T13:44:35Z" level=info msg="item [0] written"
+app_1             | time="2019-07-24T13:44:35Z" level=info msg="item [6] written"
+app_1             | time="2019-07-24T13:44:35Z" level=info msg="item [2] written"
+app_1             | time="2019-07-24T13:44:35Z" level=info msg="item [9] written"
+app_1             | time="2019-07-24T13:44:35Z" level=info msg="item [8] written"
+app_1             | time="2019-07-24T13:44:35Z" level=info msg="item [3] written"
+app_1             | time="2019-07-24T13:44:35Z" level=info msg="item [4] written"
+app_1             | time="2019-07-24T13:44:35Z" level=info msg="item [5] written"
+app_1             | time="2019-07-24T13:44:35Z" level=info msg="ddb table [ab728d9b-18bf-4bde-9709-20ff11353bb4] deleted"
+test_1            | fetch http://dl-cdn.alpinelinux.org/alpine/v3.9/community/x86_64/APKINDEX.tar.gz
+test_1            | (1/5) Installing ca-certificates (20190108-r0)
+test_1            | (2/5) Installing nghttp2-libs (1.35.1-r0)
+test_1            | (3/5) Installing libssh2 (1.8.2-r0)
+test_1            | (4/5) Installing libcurl (7.64.0-r2)
+test_1            | (5/5) Installing curl (7.64.0-r2)
+test_1            | Executing busybox-1.29.3-r10.trigger
+test_1            | Executing ca-certificates-20190108-r0.trigger
+test_1            | OK: 7 MiB in 19 packages
+test_1            |   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+test_1            |                                  Dload  Upload   Total   Spent    Left  Speed
+app_1             | time="2019-07-24T13:44:41Z" level=info msg="ddb table [2a48d1a4-a35d-4c82-8e27-b606a1d85e2c] created"
+app_1             | time="2019-07-24T13:44:41Z" level=info msg="item [8] written"
+app_1             | time="2019-07-24T13:44:41Z" level=info msg="item [0] written"
+app_1             | time="2019-07-24T13:44:41Z" level=info msg="item [1] written"
+app_1             | time="2019-07-24T13:44:41Z" level=info msg="item [7] written"
+app_1             | time="2019-07-24T13:44:41Z" level=info msg="item [4] written"
+app_1             | time="2019-07-24T13:44:41Z" level=info msg="item [5] written"
+app_1             | time="2019-07-24T13:44:41Z" level=info msg="item [2] written"
+app_1             | time="2019-07-24T13:44:41Z" level=info msg="item [6] written"
+app_1             | time="2019-07-24T13:44:41Z" level=info msg="item [3] written"
+app_1             | time="2019-07-24T13:44:41Z" level=info msg="item [9] written"
+app_1             | time="2019-07-24T13:44:41Z" level=info msg="ddb table [2a48d1a4-a35d-4c82-8e27-b606a1d85e2c] deleted"
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+test_1            |   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+test_1            |                                  Dload  Upload   Total   Spent    Left  Speed
+app_1             | time="2019-07-24T13:44:42Z" level=info msg="ddb table [5a0ce48e-927b-4ef2-a66c-4e9e9b18ffe2] created"
+app_1             | time="2019-07-24T13:44:42Z" level=info msg="item [2] written"
+app_1             | time="2019-07-24T13:44:42Z" level=info msg="item [4] written"
+app_1             | time="2019-07-24T13:44:42Z" level=info msg="item [7] written"
+app_1             | time="2019-07-24T13:44:42Z" level=info msg="item [0] written"
+app_1             | time="2019-07-24T13:44:42Z" level=info msg="item [5] written"
+app_1             | time="2019-07-24T13:44:42Z" level=info msg="item [1] written"
+app_1             | time="2019-07-24T13:44:42Z" level=info msg="item [6] written"
+app_1             | time="2019-07-24T13:44:42Z" level=info msg="item [3] written"
+app_1             | time="2019-07-24T13:44:42Z" level=info msg="item [8] written"
+app_1             | time="2019-07-24T13:44:42Z" level=info msg="item [9] written"
+app_1             | time="2019-07-24T13:44:42Z" level=info msg="ddb table [5a0ce48e-927b-4ef2-a66c-4e9e9b18ffe2] deleted"
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+test_1            |   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+test_1            |                                  Dload  Upload   Total   Spent    Left  Speed
+app_1             | time="2019-07-24T13:44:43Z" level=info msg="ddb table [55b0294b-92ea-474f-ac20-5567c52ceb3e] created"
+app_1             | time="2019-07-24T13:44:43Z" level=info msg="item [9] written"
+app_1             | time="2019-07-24T13:44:43Z" level=info msg="item [3] written"
+app_1             | time="2019-07-24T13:44:43Z" level=info msg="item [4] written"
+app_1             | time="2019-07-24T13:44:43Z" level=info msg="item [8] written"
+app_1             | time="2019-07-24T13:44:43Z" level=info msg="item [0] written"
+app_1             | time="2019-07-24T13:44:43Z" level=info msg="item [5] written"
+app_1             | time="2019-07-24T13:44:43Z" level=info msg="item [1] written"
+app_1             | time="2019-07-24T13:44:43Z" level=info msg="item [2] written"
+app_1             | time="2019-07-24T13:44:43Z" level=info msg="item [6] written"
+app_1             | time="2019-07-24T13:44:43Z" level=info msg="item [7] written"
+app_1             | time="2019-07-24T13:44:43Z" level=info msg="ddb table [55b0294b-92ea-474f-ac20-5567c52ceb3e] deleted"
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+test_1            |   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+test_1            |                                  Dload  Upload   Total   Spent    Left  Speed
+app_1             | time="2019-07-24T13:44:44Z" level=info msg="ddb table [ffb22561-7b79-4bea-94d9-acac0f1d3c4f] created"
+app_1             | time="2019-07-24T13:44:44Z" level=info msg="item [1] written"
+app_1             | time="2019-07-24T13:44:44Z" level=info msg="item [0] written"
+app_1             | time="2019-07-24T13:44:44Z" level=info msg="item [4] written"
+app_1             | time="2019-07-24T13:44:44Z" level=info msg="item [6] written"
+app_1             | time="2019-07-24T13:44:44Z" level=info msg="item [2] written"
+app_1             | time="2019-07-24T13:44:44Z" level=info msg="item [3] written"
+app_1             | time="2019-07-24T13:44:44Z" level=info msg="item [5] written"
+app_1             | time="2019-07-24T13:44:44Z" level=info msg="item [9] written"
+app_1             | time="2019-07-24T13:44:44Z" level=info msg="item [8] written"
+app_1             | time="2019-07-24T13:44:44Z" level=info msg="item [7] written"
+^CERROR: Aborting.
+make: *** [run-safe] Error 1
+
+ ~/Desktop/x_ray_sdk_reprod                                                                                                                                                                                  SIGINT(2) ↵  11352  23:44:45
+ $  $ make run-data-race
+docker-compose -f /Users/jinli/Desktop/x_ray_sdk_reprod/data_race/docker-compose.yml up --build --force-recreate
+Building daemon
+Step 1/4 : FROM alpine:3.8
+ ---> dac705114996
+Step 2/4 : WORKDIR /opt
+ ---> Using cache
+ ---> 712b1b561dbb
+Step 3/4 : RUN apk add --update --no-cache curl unzip ca-certificates libc6-comp

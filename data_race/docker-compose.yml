@@ -1,0 +1,39 @@
+version: "2.3"
+
+services:
+  dynamodb-local:
+    image: amazon/dynamodb-local
+    logging:
+      driver: none
+
+  daemon:
+    build:
+      dockerfile: xray-daemon.dockerfile
+      context: .
+    environment:
+      AWS_REGION: us-west-2
+      AWS_ACCESS_KEY_ID: 42
+      AWS_SECRET_ACCESS_KEY: 42
+      AWS_SESSION_TOKEN: 42
+      AWS_SECURITY_TOKEN: 42
+
+  app:
+    build:
+      dockerfile: app.dockerfile
+      context: .
+    links:
+      - dynamodb-local
+      - daemon
+    environment:
+      AWS_REGION: us-west-2
+      AWS_ACCESS_KEY_ID: 42
+      AWS_SECRET_ACCESS_KEY: 42
+      AWS_SESSION_TOKEN: 42
+      AWS_SECURITY_TOKEN: 42
+      AWS_XRAY_DAEMON_ADDRESS: 'daemon:2000'
+
+  test:
+    image: alpine:3.9
+    command: sh -c "apk add --no-cache curl; while true; do sleep 1; curl -q http://app:8080/; done"
+    links:
+      - app

@@ -1,0 +1,396 @@
+ make run-data-race
+docker-compose -f /Users/jinli/Desktop/x_ray_sdk_reprod/data_race/docker-compose.yml up --build --force-recreate
+Building daemon
+Step 1/4 : FROM alpine:3.8
+ ---> dac705114996
+Step 2/4 : WORKDIR /opt
+ ---> Using cache
+ ---> 712b1b561dbb
+Step 3/4 : RUN apk add --update --no-cache curl unzip ca-certificates libc6-compat &&    update-ca-certificates     &&    curl -o /opt/daemon.zip https://s3.dualstack.us-east-2.amazonaws.com/aws-xray-assets.us-east-2/xray-daemon/aws-xray-daemon-linux-3.x.zip &&    unzip /opt/daemon.zip      &&    rm /opt/daemon.zip         &&    mv /opt/xray /usr/bin/xray &&    apk del curl unzip
+ ---> Using cache
+ ---> ea2f46761b2f
+Step 4/4 : CMD /usr/bin/xray --bind 0.0.0.0:2000
+ ---> Using cache
+ ---> 49e4313c2418
+
+Successfully built 49e4313c2418
+Successfully tagged data_race_daemon:latest
+Building app
+Step 1/10 : FROM golang:1.11 AS builder
+ ---> 69a024a6ecf5
+Step 2/10 : ENV GO111MODULE=on
+ ---> Using cache
+ ---> 6f8fc303d419
+Step 3/10 : WORKDIR /opt
+ ---> Using cache
+ ---> 8cf5c8c30d11
+Step 4/10 : COPY go.mod go.sum ./
+ ---> Using cache
+ ---> 6b860630f97b
+Step 5/10 : RUN go mod download
+ ---> Using cache
+ ---> 44b466e772c4
+Step 6/10 : COPY . ./
+ ---> Using cache
+ ---> b32567f2cc57
+Step 7/10 : RUN CGO_ENABLED=1 GOOS=linux go build -race -a -installsuffix nocgo -o /opt/test ./main.go &&    chmod +x /opt/test
+ ---> Using cache
+ ---> f347fdeb45ec
+
+Step 8/10 : FROM debian:stretch
+ ---> 5a6d49d5e833
+Step 9/10 : COPY --from=builder /opt/test /opt/test
+ ---> Using cache
+ ---> a21c915772f5
+Step 10/10 : ENTRYPOINT ["/opt/test"]
+ ---> Using cache
+ ---> 404ef598b931
+
+Successfully built 404ef598b931
+Successfully tagged data_race_app:latest
+Recreating data_race_daemon_1         ... done
+Recreating data_race_dynamodb-local_1 ... done
+Recreating data_race_app_1            ... done
+Recreating data_race_test_1           ... done
+Attaching to data_race_daemon_1, data_race_dynamodb-local_1, data_race_app_1, data_race_test_1
+daemon_1          | 2019-07-24T13:45:38Z [Info] Initializing AWS X-Ray daemon 3.0.1
+dynamodb-local_1  | WARNING: no logs are available with the 'none' log driver
+daemon_1          | 2019-07-24T13:45:38Z [Info] Using buffer memory limit of 77 MB
+daemon_1          | 2019-07-24T13:45:38Z [Info] 1232 segment buffers allocated
+daemon_1          | 2019-07-24T13:45:38Z [Info] Using region: us-west-2
+test_1            | fetch http://dl-cdn.alpinelinux.org/alpine/v3.9/main/x86_64/APKINDEX.tar.gz
+daemon_1          | 2019-07-24T13:45:38Z [Info] Starting proxy http server on 127.0.0.1:2000
+app_1             | 2019-07-24T13:45:39Z [INFO] using daemon endpoints from environment variable AWS_XRAY_DAEMON_ADDRESS: daemon:2000
+app_1             | 2019-07-24T13:45:39Z [INFO] using daemon endpoints from environment variable AWS_XRAY_DAEMON_ADDRESS: daemon:2000
+app_1             | 2019-07-24T13:45:39Z [INFO] Emitter using address: 172.24.0.2:2000
+app_1             | 2019-07-24T13:45:39Z [INFO] using daemon endpoints from environment variable AWS_XRAY_DAEMON_ADDRESS: daemon:2000
+app_1             | 2019-07-24T13:45:39Z [INFO] Emitter using address: 172.24.0.2:2000
+test_1            | fetch http://dl-cdn.alpinelinux.org/alpine/v3.9/community/x86_64/APKINDEX.tar.gz
+test_1            | (1/5) Installing ca-certificates (20190108-r0)
+test_1            | (2/5) Installing nghttp2-libs (1.35.1-r0)
+test_1            | (3/5) Installing libssh2 (1.8.2-r0)
+test_1            | (4/5) Installing libcurl (7.64.0-r2)
+test_1            | (5/5) Installing curl (7.64.0-r2)
+test_1            | Executing busybox-1.29.3-r10.trigger
+test_1            | Executing ca-certificates-20190108-r0.trigger
+test_1            | OK: 7 MiB in 19 packages
+test_1            |   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+test_1            |                                  Dload  Upload   Total   Spent    Left  Speed
+app_1             | 2019-07-24T13:45:43Z [INFO] X-Ray proxy using address : 172.24.0.2:2000
+app_1             | time="2019-07-24T13:45:43Z" level=info msg="ddb table [00b48c8c-6738-4bbc-9696-e4f8fb8b6bee] created"
+app_1             | ==================
+app_1             | WARNING: DATA RACE
+app_1             | Write at 0x00c000064860 by goroutine 50:
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.glob..func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/segment_model.go:138 +0x434
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*HandlerList).Run()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/handlers.go:216 +0xd3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Build()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:359 +0xc3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Sign()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:380 +0x3c
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Send()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:475 +0x18a
+app_1             |   github.com/aws/aws-sdk-go/service/dynamodb.(*DynamoDB).PutItemWithContext()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/service/dynamodb/api.go:2969 +0x232
+app_1             |   main.(*controller).handlerFunc.func1()
+app_1             |       /opt/main.go:68 +0x559
+app_1             |
+app_1             | Previous write at 0x00c000064860 by goroutine 52:
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.glob..func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/segment_model.go:138 +0x434
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*HandlerList).Run()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/handlers.go:216 +0xd3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Build()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:359 +0xc3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Sign()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:380 +0x3c
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Send()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:475 +0x18a
+app_1             |   github.com/aws/aws-sdk-go/service/dynamodb.(*DynamoDB).PutItemWithContext()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/service/dynamodb/api.go:2969 +0x232
+app_1             |   main.(*controller).handlerFunc.func1()
+app_1             |       /opt/main.go:68 +0x559
+app_1             |
+app_1             | Goroutine 50 (running) created at:
+app_1             |   main.(*controller).handlerFunc()
+app_1             |       /opt/main.go:65 +0x292
+app_1             |   main.(*controller).handlerFunc-fm()
+app_1             |       /opt/main.go:109 +0x5f
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.httpTrace()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:163 +0x889
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.Handler.func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:118 +0x334
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   net/http.serverHandler.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:2741 +0xc4
+app_1             |   net/http.(*conn).serve()
+app_1             |       /usr/local/go/src/net/http/server.go:1847 +0x80a
+app_1             |
+app_1             | Goroutine 52 (running) created at:
+app_1             |   main.(*controller).handlerFunc()
+app_1             |       /opt/main.go:65 +0x292
+app_1             |   main.(*controller).handlerFunc-fm()
+app_1             |       /opt/main.go:109 +0x5f
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.httpTrace()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:163 +0x889
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.Handler.func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:118 +0x334
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   net/http.serverHandler.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:2741 +0xc4
+app_1             |   net/http.(*conn).serve()
+app_1             |       /usr/local/go/src/net/http/server.go:1847 +0x80a
+app_1             | ==================
+app_1             | ==================
+app_1             | WARNING: DATA RACE
+app_1             | Write at 0x00c000064850 by goroutine 50:
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.glob..func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/segment_model.go:142 +0x4a5
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*HandlerList).Run()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/handlers.go:216 +0xd3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Build()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:359 +0xc3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Sign()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:380 +0x3c
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Send()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:475 +0x18a
+app_1             |   github.com/aws/aws-sdk-go/service/dynamodb.(*DynamoDB).PutItemWithContext()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/service/dynamodb/api.go:2969 +0x232
+app_1             |   main.(*controller).handlerFunc.func1()
+app_1             |       /opt/main.go:68 +0x559
+app_1             |
+app_1             | Previous write at 0x00c000064850 by goroutine 52:
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.glob..func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/segment_model.go:142 +0x4a5
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*HandlerList).Run()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/handlers.go:216 +0xd3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Build()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:359 +0xc3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Sign()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:380 +0x3c
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Send()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:475 +0x18a
+app_1             |   github.com/aws/aws-sdk-go/service/dynamodb.(*DynamoDB).PutItemWithContext()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/service/dynamodb/api.go:2969 +0x232
+app_1             |   main.(*controller).handlerFunc.func1()
+app_1             |       /opt/main.go:68 +0x559
+app_1             |
+app_1             | Goroutine 50 (running) created at:
+app_1             |   main.(*controller).handlerFunc()
+app_1             |       /opt/main.go:65 +0x292
+app_1             |   main.(*controller).handlerFunc-fm()
+app_1             |       /opt/main.go:109 +0x5f
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.httpTrace()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:163 +0x889
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.Handler.func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:118 +0x334
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   net/http.serverHandler.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:2741 +0xc4
+app_1             |   net/http.(*conn).serve()
+app_1             |       /usr/local/go/src/net/http/server.go:1847 +0x80a
+app_1             |
+app_1             | Goroutine 52 (running) created at:
+app_1             |   main.(*controller).handlerFunc()
+app_1             |       /opt/main.go:65 +0x292
+app_1             |   main.(*controller).handlerFunc-fm()
+app_1             |       /opt/main.go:109 +0x5f
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.httpTrace()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:163 +0x889
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.Handler.func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:118 +0x334
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   net/http.serverHandler.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:2741 +0xc4
+app_1             |   net/http.(*conn).serve()
+app_1             |       /usr/local/go/src/net/http/server.go:1847 +0x80a
+app_1             | ==================
+app_1             | ==================
+app_1             | WARNING: DATA RACE
+app_1             | Write at 0x00c000064850 by goroutine 54:
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.glob..func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/segment_model.go:142 +0x4a5
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*HandlerList).Run()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/handlers.go:216 +0xd3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Build()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:359 +0xc3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Sign()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:380 +0x3c
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Send()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:475 +0x18a
+app_1             |   github.com/aws/aws-sdk-go/service/dynamodb.(*DynamoDB).PutItemWithContext()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/service/dynamodb/api.go:2969 +0x232
+app_1             |   main.(*controller).handlerFunc.func1()
+app_1             |       /opt/main.go:68 +0x559
+app_1             |
+app_1             | Previous write at 0x00c000064850 by goroutine 52:
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.glob..func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/segment_model.go:142 +0x4a5
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*HandlerList).Run()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/handlers.go:216 +0xd3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Build()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:359 +0xc3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Sign()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:380 +0x3c
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Send()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:475 +0x18a
+app_1             |   github.com/aws/aws-sdk-go/service/dynamodb.(*DynamoDB).PutItemWithContext()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/service/dynamodb/api.go:2969 +0x232
+app_1             |   main.(*controller).handlerFunc.func1()
+app_1             |       /opt/main.go:68 +0x559
+app_1             |
+app_1             | Goroutine 54 (running) created at:
+app_1             |   main.(*controller).handlerFunc()
+app_1             |       /opt/main.go:65 +0x292
+app_1             |   main.(*controller).handlerFunc-fm()
+app_1             |       /opt/main.go:109 +0x5f
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.httpTrace()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:163 +0x889
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.Handler.func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:118 +0x334
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   net/http.serverHandler.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:2741 +0xc4
+app_1             |   net/http.(*conn).serve()
+app_1             |       /usr/local/go/src/net/http/server.go:1847 +0x80a
+app_1             |
+app_1             | Goroutine 52 (running) created at:
+app_1             |   main.(*controller).handlerFunc()
+app_1             |       /opt/main.go:65 +0x292
+app_1             |   main.(*controller).handlerFunc-fm()
+app_1             |       /opt/main.go:109 +0x5f
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.httpTrace()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:163 +0x889
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.Handler.func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:118 +0x334
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   net/http.serverHandler.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:2741 +0xc4
+app_1             |   net/http.(*conn).serve()
+app_1             |       /usr/local/go/src/net/http/server.go:1847 +0x80a
+app_1             | ==================
+app_1             | ==================
+app_1             | WARNING: DATA RACE
+app_1             | Write at 0x00c000064860 by goroutine 51:
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.glob..func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/segment_model.go:138 +0x434
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*HandlerList).Run()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/handlers.go:216 +0xd3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Build()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:359 +0xc3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Sign()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:380 +0x3c
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Send()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:475 +0x18a
+app_1             |   github.com/aws/aws-sdk-go/service/dynamodb.(*DynamoDB).PutItemWithContext()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/service/dynamodb/api.go:2969 +0x232
+app_1             |   main.(*controller).handlerFunc.func1()
+app_1             |       /opt/main.go:68 +0x559
+app_1             |
+app_1             | Previous write at 0x00c000064860 by goroutine 52:
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.glob..func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/segment_model.go:138 +0x434
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*HandlerList).Run()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/handlers.go:216 +0xd3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Build()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:359 +0xc3
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Sign()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:380 +0x3c
+app_1             |   github.com/aws/aws-sdk-go/aws/request.(*Request).Send()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/aws/request/request.go:475 +0x18a
+app_1             |   github.com/aws/aws-sdk-go/service/dynamodb.(*DynamoDB).PutItemWithContext()
+app_1             |       /go/pkg/mod/github.com/aws/aws-sdk-go@v1.17.12/service/dynamodb/api.go:2969 +0x232
+app_1             |   main.(*controller).handlerFunc.func1()
+app_1             |       /opt/main.go:68 +0x559
+app_1             |
+app_1             | Goroutine 51 (running) created at:
+app_1             |   main.(*controller).handlerFunc()
+app_1             |       /opt/main.go:65 +0x292
+app_1             |   main.(*controller).handlerFunc-fm()
+app_1             |       /opt/main.go:109 +0x5f
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.httpTrace()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:163 +0x889
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.Handler.func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:118 +0x334
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   net/http.serverHandler.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:2741 +0xc4
+app_1             |   net/http.(*conn).serve()
+app_1             |       /usr/local/go/src/net/http/server.go:1847 +0x80a
+app_1             |
+app_1             | Goroutine 52 (running) created at:
+app_1             |   main.(*controller).handlerFunc()
+app_1             |       /opt/main.go:65 +0x292
+app_1             |   main.(*controller).handlerFunc-fm()
+app_1             |       /opt/main.go:109 +0x5f
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.httpTrace()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:163 +0x889
+app_1             |   github.com/aws/aws-xray-sdk-go/xray.Handler.func1()
+app_1             |       /go/pkg/mod/github.com/aws/aws-xray-sdk-go@v1.0.0-rc.11/xray/handler.go:118 +0x334
+app_1             |   net/http.HandlerFunc.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:1964 +0x51
+app_1             |   net/http.serverHandler.ServeHTTP()
+app_1             |       /usr/local/go/src/net/http/server.go:2741 +0xc4
+app_1             |   net/http.(*conn).serve()
+app_1             |       /usr/local/go/src/net/http/server.go:1847 +0x80a
+app_1             | ==================
+app_1             | time="2019-07-24T13:45:43Z" level=info msg="item [1] written"
+app_1             | time="2019-07-24T13:45:43Z" level=info msg="item [7] written"
+app_1             | time="2019-07-24T13:45:43Z" level=info msg="item [8] written"
+app_1             | time="2019-07-24T13:45:43Z" level=info msg="item [3] written"
+app_1             | time="2019-07-24T13:45:43Z" level=info msg="item [2] written"
+app_1             | time="2019-07-24T13:45:43Z" level=info msg="item [0] written"
+app_1             | time="2019-07-24T13:45:43Z" level=info msg="item [9] written"
+app_1             | time="2019-07-24T13:45:43Z" level=info msg="item [5] written"
+app_1             | time="2019-07-24T13:45:43Z" level=info msg="item [6] written"
+app_1             | time="2019-07-24T13:45:44Z" level=info msg="item [4] written"
+app_1             | time="2019-07-24T13:45:44Z" level=info msg="ddb table [00b48c8c-6738-4bbc-9696-e4f8fb8b6bee] deleted"
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+test_1            |   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+test_1            |                                  Dload  Upload   Total   Spent    Left  Speed
+app_1             | time="2019-07-24T13:45:45Z" level=info msg="ddb table [79f2e78a-67b8-4ef4-bdd9-eae4978fb6ac] created"
+app_1             | time="2019-07-24T13:45:45Z" level=info msg="item [1] written"
+app_1             | time="2019-07-24T13:45:45Z" level=info msg="item [4] written"
+app_1             | time="2019-07-24T13:45:45Z" level=info msg="item [2] written"
+app_1             | time="2019-07-24T13:45:45Z" level=info msg="item [0] written"
+app_1             | time="2019-07-24T13:45:45Z" level=info msg="item [7] written"
+app_1             | time="2019-07-24T13:45:45Z" level=info msg="item [6] written"
+app_1             | time="2019-07-24T13:45:45Z" level=info msg="item [3] written"
+app_1             | time="2019-07-24T13:45:45Z" level=info msg="item [8] written"
+app_1             | time="2019-07-24T13:45:45Z" level=info msg="item [5] written"
+app_1             | time="2019-07-24T13:45:45Z" level=info msg="item [9] written"
+app_1             | time="2019-07-24T13:45:45Z" level=info msg="ddb table [79f2e78a-67b8-4ef4-bdd9-eae4978fb6ac] deleted"
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+^CGracefully stopping... (press Ctrl+C again to force)
+Killing data_race_test_1              ... done
+Killing data_race_app_1               ... done
+Killing data_race_dynamodb-local_1    ... done
+Killing data_race_daemon_1            ... done
+make: *** [run-data-race] Error 2
+
+ ~/Desktop/x_ray_sdk_reprod                                                                                                                                                                                  SIGINT(2) ↵  11354  23:45:47
+ $
